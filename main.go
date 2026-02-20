@@ -42,20 +42,10 @@ func main() {
 	//goland:noinspection SqlNoDataSourceInspection,SqlResolve
 	query := `SELECT COUNT(*) FROM PCIDLIB.CIMASTRN`
 
-	rows, err := db2.QueryContext(ctx, query)
+	var count int64
+	err = db2.QueryRowContext(ctx, query).Scan(&count)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	var count int64
-
-	//goland:noinspection GoUnhandledErrorResult
-	defer rows.Close()
-	for rows.Next() {
-		err := rows.Scan(&count)
-		if err != nil {
-			log.Fatal(err)
-		}
 	}
 
 	fmt.Printf("Count: %d\n", count)
