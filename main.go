@@ -5,20 +5,18 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	_ "github.com/alexbrainman/odbc"
 )
 
-const (
-	dsn = "DEV"
-	uid = "user-id-here"
-	pwd = "password-here"
-)
-
 func main() {
-	//TIP <p>Press <shortcut actionId="ShowIntentionActions"/> when your caret is at the underlined text
-	// to see how GoLand suggests fixing the warning.</p><p>Alternatively, if available, click the lightbulb to view possible fixes.</p>
+	dsn, uid, pwd, err := setVars()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	conn := fmt.Sprintf("DSN=%s;UID=%s;PWD=%s", dsn, uid, pwd)
 	db2, err := sql.Open("odbc", conn)
 	if err != nil {
@@ -41,7 +39,7 @@ func main() {
 		log.Fatalf("DB2 ping failed: %v", err)
 	}
 
-	//goland:noinspection SqlNoDataSourceInspection
+	//goland:noinspection SqlNoDataSourceInspection,SqlResolve
 	query := `SELECT COUNT(*) FROM PCIDLIB.CIMASTRN`
 
 	rows, err := db2.QueryContext(ctx, query)
@@ -61,4 +59,34 @@ func main() {
 	}
 
 	fmt.Printf("Count: %d\n", count)
+}
+
+func setVars() (string, string, string, error) {
+	var dsn, uid, pwd string
+	var err error
+
+	dsn, err = env("DB2_DSN")
+	if err != nil {
+		return "", "", "", err
+	}
+
+	uid, err = env("DB2_UID")
+	if err != nil {
+		return "", "", "", err
+	}
+
+	pwd, err = env("DB2_PWD")
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return dsn, uid, pwd, nil
+}
+
+func env(key string) (string, error) {
+	v := os.Getenv(key)
+	if v == "" {
+		return v, fmt.Errorf("%s not set", key)
+	}
+	return v, nil
 }
